@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cat vs Dog Predictor</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 400px;
+        margin: 2em auto;
+        padding: 1em;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 1em;
+      }
+      label,
+      select,
+      input,
+      button {
+        display: block;
+        width: 100%;
+        margin-bottom: 0.75em;
+      }
+      select,
+      input {
+        padding: 0.5em;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      button {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 0.6em;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #218838;
+      }
+      #result {
+        margin-top: 1em;
+        padding: 0.75em;
+        border: 1px solid #eee;
+        border-radius: 4px;
+        min-height: 2em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Cat vs Dog Predictor</h1>
+    <form id="predict-form">
+      <label for="model-select">Model Seçin:</label>
+      <select id="model-select">
+        <option value="resnet_feature">resnet_feature</option>
+        <option value="resnet_finetune">resnet_finetune</option>
+        <option value="cnn_functional">cnn_functional</option>
+      </select>
+
+      <label for="image-input">Resim Yükleyin:</label>
+      <input type="file" id="image-input" accept="image/*" required />
+
+      <button type="submit">Tahmin Et</button>
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+      document
+        .getElementById("predict-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const resDiv = document.getElementById("result");
+          resDiv.textContent = "Tahmin yapılıyor...";
+
+          const model = document.getElementById("model-select").value;
+          const file = document.getElementById("image-input").files[0];
+          if (!file) {
+            resDiv.textContent = "Lütfen resim seçin.";
+            return;
+          }
+
+          const form = new FormData();
+          form.append("file", file);
+
+          try {
+            const response = await fetch(
+              `http://127.0.0.1:8000/predict?model_name=${encodeURIComponent(
+                model
+              )}`,
+              {
+                method: "POST",
+                body: form,
+              }
+            );
+            if (!response.ok) {
+              const text = await response.text();
+              throw new Error(text);
+            }
+            const data = await response.json();
+            resDiv.innerHTML = `
+          <strong>Model:</strong> ${data.model}<br/>
+          <strong>Sonuç:</strong> ${data.prediction}<br/>
+        `;
+          } catch (err) {
+            resDiv.textContent = "Hata: " + err.message;
+          }
+        });
+    </script>
+  </body>
+</html>
